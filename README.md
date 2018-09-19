@@ -20,8 +20,8 @@ Convert Foliant project to Slate:
 ```bash
 $ foliant make slate
 ✔ Parsing config
-✔ Applying preprocessor mkdocs
-✔ Making mkdocs with MkDocs
+✔ Applying preprocessor flatten
+✔ Making slate
 ─────────────────────
 Result: My_Project-2018-09-19.src/
 ```
@@ -31,8 +31,8 @@ Build a standalone website:
 ```bash
 $ foliant make site
 ✔ Parsing config
-✔ Applying preprocessor mkdocs
-✔ Making site with MkDocs
+✔ Applying preprocessor flatten
+✔ Making site
 ─────────────────────
 Result: My_Project-2018-09-19.slate/
 ```
@@ -41,7 +41,7 @@ Result: My_Project-2018-09-19.slate/
 
 You don't have to put anything in the config to use Slate backend. If it is installed, Foliant detects it.
 
-To customize the output, use options in `backend_config.mkdocs` section:
+To customize the output, use options in `backend_config.slate` section:
 
 ```yaml
 backend_config:
@@ -66,11 +66,12 @@ Shards is just a folder with files which will be copied into the generated Slate
 
 For example, I want to customize standard Slate stylesheets. I go into the Slate repo and see that they lie in the folder `<slate>/source/stylesheets`. I create new stylesheets with the same names as the original ones and put them into my shards dir like that:
 
-```shards\
+```
+shards\
     source\
         stylesheets\
             _variables.scss
             screen.css.scss
 ```
 
-These stylesheets will replace the original ones in the Slate project just before baking the website.
+These stylesheets will replace the original ones in the Slate project just before the website will be baked.
