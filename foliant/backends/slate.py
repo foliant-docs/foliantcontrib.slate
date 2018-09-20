@@ -8,22 +8,12 @@ from subprocess import run, PIPE, STDOUT, CalledProcessError
 from foliant.utils import spinner
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
+from pathlib import Path
 
 SLATE_REPO = 'https://github.com/lord/slate.git'
 
 
-class Backend(BaseBackend):
-    _flat_src_file_name = '__all__.md'
-
-    targets = ('slate', 'slate-project', 'site')
-
-    required_preprocessors_after = {
-        'flatten': {
-            'flat_src_file_name': _flat_src_file_name
-        }
-    },
-
-    def copy_replace(self, src: str, dst: str):
+def copy_replace(src: str, dst: str):
         """
         Helper function to copy contents of src dir into dst dir replacing
         all files with same names
@@ -38,6 +28,53 @@ class Backend(BaseBackend):
                 if os.path.exists(dst_file):
                     os.remove(dst_file)
                 copy(src_file, dst_dir)
+
+
+class Chapters():
+    """
+    Helper class converting chapter list of complicated structure
+    into a plain list of chapter names or path to actual md files
+    in the working_dir.
+    """
+
+    def __init__(self,
+                 chapters: list,
+                 working_dir: Path):
+        self.set_chapters(chapters)
+        self._working_dir = working_dir
+
+    def set_chapters(self, chapters: list):
+        def flatten_seq(seq):
+            """convert a sequence of embedded sequences into a plain list"""
+            result = []
+            vals = seq.values() if type(seq) == dict else seq
+            for i in vals:
+                if type(i) in (dict, list):
+                    result.extend(flatten_seq(i))
+                else:
+                    result.append(i)
+            return result
+        self._chapters = flatten_seq(chapters)
+
+    @property
+    def chapters(self):
+        return self._chapters
+
+    @property
+    def paths_g(self):
+        return (self._working_dir / chap for chap in self._chapters)
+
+
+class Backend(BaseBackend):
+    # _flat_src_file_name = '__all__.md'
+
+    targets = ('slate', 'site')
+
+    # required_preprocessors_after = {
+    #     'flatten': {
+    #         'flat_src_file_name': _flat_src_file_name
+    #     }
+    # },
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,7 +91,8 @@ class Backend(BaseBackend):
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
         self._shards_dir = self.project_path /\
             self._slate_config.get('shards_path', 'shards')
-        self._flat_src_file_path = self.working_dir / self._flat_src_file_name
+        # self._flat_src_file_path = self.working_dir / self._flat_src_file_name
+        self._chapters = Chapters(self.config['chapters'], self.working_dir)
 
         if self._slate_tmp_dir.exists():
             remove_tree(self._slate_tmp_dir)
@@ -64,15 +102,26 @@ class Backend(BaseBackend):
 
         self.logger.debug(f'Backend inited: {self.__dict__}')
 
-    def _add_header(self):
-        """Add yaml-header into the main md file"""
+    def _add_header(self, chapter_path: Path or str):
+        """
+        Add yaml-header into the main md file
 
-        with open(self._flat_src_file_path, encoding='utf8') as md:
+        chapter_path - path to md file where the header should be inserted
+        """
+
+        with open(chapter_path, encoding='utf8') as md:
             content = md.read()
-        header = yaml.dump(self._header,
+        # copy header dict into variable
+        header_dict = dict(self._header)
+
+        # prepend includes by all chapters except the first one
+        header_dict['includes'] = self._chapters.chapters[1:] +\
+            header_dict.get('includes', [])
+
+        header = yaml.dump(header_dict,
                            default_flow_style=False,
                            allow_unicode=True)
-        with open(self._flat_src_file_path, 'w', encoding='utf8') as md:
+        with open(chapter_path, 'w', encoding='utf8') as md:
             md.write(f'---\n{header}\n---\n\n{content}')
 
     def _clone_repo(self):
@@ -100,23 +149,40 @@ class Backend(BaseBackend):
     def make(self, target: str) -> str:
         with spinner(f'Making {target}', self.logger, self.quiet):
             try:
-                self._add_header()
+                chapters = self._chapters.paths_g
 
+                # delete old slate project
                 if self._slate_tmp_dir.exists():
                     remove_tree(self._slate_tmp_dir)
                 os.makedirs(self._slate_tmp_dir)
 
+                # get base slate project
                 self._clone_repo()
 
+                # assemble project from base repo and shards
                 copy_tree(str(self._slate_repo_dir), str(self._slate_tmp_dir))
                 if self._shards_dir.exists():
-                    self.copy_replace(str(self._shards_dir),
-                                      str(self._slate_tmp_dir))
+                    copy_replace(str(self._shards_dir),
+                                 str(self._slate_tmp_dir))
+
+                # remove base source files
                 index_html = self._slate_tmp_dir / 'source/index.html.md'
                 if index_html.exists():
                     os.remove(index_html)
+                errors_md = self._slate_tmp_dir / 'source/includes/_errors.md'
+                if errors_md.exists():
+                    os.remove(errors_md)
 
-                copyfile(self._flat_src_file_path, str(index_html) + '.erb')
+                # replace index.html.md with the first chapter
+                chapter_path = next(chapters)
+                self._add_header(chapter_path)
+                # without erb extension ruby includes won't work
+                copyfile(chapter_path, str(index_html) + '.erb')
+
+                # copy all chapters except the first one into includes folder
+                for chapter_path in chapters:
+                    copy(chapter_path, str(self._slate_tmp_dir /
+                                           'source/includes'))
 
                 if target == 'site':
                     run(
