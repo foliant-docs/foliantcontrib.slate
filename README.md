@@ -15,7 +15,17 @@ $ pip install foliantcontrib.slate
 
 ## Usage
 
-Convert Foliant project to Slate:
+To use this backend Slate should be installed in your system. Follow the [instruction](https://github.com/lord/slate#getting-set-up) in Slate repo.
+
+To test if you've installed Slate properly head to the cloned Slate repo in your terminal and try the command below. You should get similar response.
+
+```$ bundle exec middleman
+== The Middleman is loading
+== View your site at ...
+== Inspect your site configuration at ...
+```
+
+To convert Foliant project to Slate:
 
 ```bash
 $ foliant make slate
