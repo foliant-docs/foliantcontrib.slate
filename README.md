@@ -30,7 +30,6 @@ To convert Foliant project to Slate:
 ```bash
 $ foliant make slate
 ✔ Parsing config
-✔ Applying preprocessor flatten
 ✔ Making slate
 ─────────────────────
 Result: My_Project-2018-09-19.src/
@@ -41,7 +40,6 @@ Build a standalone website:
 ```bash
 $ foliant make site
 ✔ Parsing config
-✔ Applying preprocessor flatten
 ✔ Making site
 ─────────────────────
 Result: My_Project-2018-09-19.slate/

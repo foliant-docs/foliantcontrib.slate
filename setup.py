@@ -16,7 +16,7 @@ setup(
     description=SHORT_DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    version='1.0.0',
+    version='1.0.1',
     author='Daniil Minukhin',
     author_email='ddddsa@gmail.com',
     url='https://github.com/foliant-docs/foliantcontrib.slate',
