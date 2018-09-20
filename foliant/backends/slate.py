@@ -52,8 +52,8 @@ class Backend(BaseBackend):
             f'{self._slate_config.get("slug", self.get_slug())}.src'
         self._slate_repo_dir = self.project_path / '.slate/slaterepo'
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
-        self._shards_dir = self.project_path / self._slate_config.get('shards_path',
-                                                                      'shards')
+        self._shards_dir = self.project_path /\
+            self._slate_config.get('shards_path', 'shards')
         self._flat_src_file_path = self.working_dir / self._flat_src_file_name
 
         if self._slate_tmp_dir.exists():
@@ -117,6 +117,7 @@ class Backend(BaseBackend):
                     os.remove(index_html)
 
                 copyfile(self._flat_src_file_path, str(index_html) + '.erb')
+
                 if target == 'site':
                     run(
                         f'bundle exec middleman build --clean',

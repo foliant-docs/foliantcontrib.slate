@@ -4,8 +4,8 @@ Slate backend generates API documentation from Markdown using [Slate docs genera
 
 This backend operates two targets:
 
-* `site` — builds a standalone website;
-* `slate` — generates a slate project out from your foliant project.
+* `site` — build a standalone website;
+* `slate` — generate a slate project out from your Foliant project.
 
 ## Installation
 
@@ -62,9 +62,9 @@ backend_config:
 
 ## About shards
 
-Shards is just a folder with files which will be copied into the generated Slate project replacing all files in there. If you follow the Slate project structure you can replace stylesheets, js-files, images etc to customize the view of your resulting site.
+Shards is just a folder with files which will be copied into the generated Slate project replacing all files in there. If you follow the Slate project structure you can replace stylesheets, scripts, images, layouts etc to customize the view of the resulting site.
 
-For example, I want to customize standard Slate stylesheets. I go into the Slate repo and see that they lie in the folder `<slate>/source/stylesheets`. I create new stylesheets with the same names as the original ones and put them into my shards dir like that:
+For example, I want to customize standard Slate stylesheets. I look at the Slate repo and see that they lie in the folder `<slate>/source/stylesheets`. I create new stylesheets with the same names as the original ones and put them into my shards dir like that:
 
 ```
 shards\
@@ -74,4 +74,4 @@ shards\
             screen.css.scss
 ```
 
-These stylesheets will replace the original ones in the Slate project just before the website will be baked.
+These stylesheets will replace the original ones in the Slate project just before the website will be baked. So the page will use my styles in the end.
