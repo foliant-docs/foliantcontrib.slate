@@ -19,7 +19,8 @@ To use this backend Slate should be installed in your system. Follow the [instru
 
 To test if you've installed Slate properly head to the cloned Slate repo in your terminal and try the command below. You should get similar response.
 
-```$ bundle exec middleman
+```bash
+$ bundle exec middleman
 == The Middleman is loading
 == View your site at ...
 == Inspect your site configuration at ...
