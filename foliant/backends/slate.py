@@ -66,15 +66,8 @@ class Chapters():
 
 
 class Backend(BaseBackend):
-    # _flat_src_file_name = '__all__.md'
 
     targets = ('slate', 'site')
-
-    # required_preprocessors_after = {
-    #     'flatten': {
-    #         'flat_src_file_name': _flat_src_file_name
-    #     }
-    # },
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,7 +84,6 @@ class Backend(BaseBackend):
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
         self._shards_dir = self.project_path /\
             self._slate_config.get('shards_path', 'shards')
-        # self._flat_src_file_path = self.working_dir / self._flat_src_file_name
         self._chapters = Chapters(self.config['chapters'], self.working_dir)
 
         if self._slate_tmp_dir.exists():
