@@ -43,6 +43,9 @@ class Chapters():
         self.set_chapters(chapters)
         self._working_dir = working_dir
 
+    def __len__(self):
+        return len(self._chapters)
+
     def set_chapters(self, chapters: list):
         def flatten_seq(seq):
             """convert a sequence of embedded sequences into a plain list"""
@@ -82,8 +85,6 @@ class Backend(BaseBackend):
             f'{self._slate_config.get("slug", self.get_slug())}.src'
         self._slate_repo_dir = self.project_path / '.slate/slaterepo'
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
-        self._shards_dir = self.project_path /\
-            self._slate_config.get('shards_path', 'shards')
         self._chapters = Chapters(self.config['chapters'], self.working_dir)
 
         if self._slate_tmp_dir.exists():
@@ -93,6 +94,18 @@ class Backend(BaseBackend):
         self.logger = self.logger.getChild('slate')
 
         self.logger.debug(f'Backend inited: {self.__dict__}')
+
+    def _add_shards(self):
+        """move shards into slate tmp dir"""
+
+        shards = self._slate_config.get('shards', 'shards')
+        if type(shards) == str:
+            shards = [shards]
+        for shard in shards:
+            shard_path = self.project_path / shard
+            if shard_path.exists():
+                copy_replace(str(shard_path),
+                             str(self._slate_tmp_dir))
 
     def _add_header(self, chapter_path: Path or str):
         """
@@ -107,14 +120,16 @@ class Backend(BaseBackend):
         header_dict = dict(self._header)
 
         # prepend includes by all chapters except the first one
-        header_dict['includes'] = self._chapters.chapters[1:] +\
-            header_dict.get('includes', [])
+        if len(self._chapters) > 1:
+            header_dict['includes'] = self._chapters.chapters[1:] +\
+                header_dict.get('includes', [])
 
-        header = yaml.dump(header_dict,
-                           default_flow_style=False,
-                           allow_unicode=True)
-        with open(chapter_path, 'w', encoding='utf8') as md:
-            md.write(f'---\n{header}\n---\n\n{content}')
+        if header_dict:
+            header = yaml.dump(header_dict,
+                               default_flow_style=False,
+                               allow_unicode=True)
+            with open(chapter_path, 'w', encoding='utf8') as md:
+                md.write(f'---\n{header}\n---\n\n{content}')
 
     def _clone_repo(self):
         """Clone or update slate repository"""
@@ -153,9 +168,7 @@ class Backend(BaseBackend):
 
                 # assemble project from base repo and shards
                 copy_tree(str(self._slate_repo_dir), str(self._slate_tmp_dir))
-                if self._shards_dir.exists():
-                    copy_replace(str(self._shards_dir),
-                                 str(self._slate_tmp_dir))
+                self._add_shards()
 
                 # remove base source files
                 index_html = self._slate_tmp_dir / 'source/index.html.md'

@@ -55,7 +55,7 @@ To customize the output, use options in `backend_config.slate` section:
 ```yaml
 backend_config:
   slate:
-    shards_path: data/shards
+    shards: data/shards
     header:
         title: My API documentation
         language_tabs:
@@ -63,8 +63,8 @@ backend_config:
         search: true
 ```
 
-`shards_path`
-:   Path to the shards directory relative to Foliant project dir. Shards allow you to customize Slate's layout, add scripts etc. More info on shards in the following section. Default: `shards`
+`shards`
+:   Path to the shards directory relative to Foliant project dir or list of such paths. Shards allow you to customize Slate's layout, add scripts etc. More info on shards in the following section. Default: `shards`
 
 `header`
 :   Params to be copied into the beginning of Slate main Markdown file `index.html.md`. They allow you to change the title of the website, toggle search and add language tabs. More info in [Slate Wiki](https://github.com/lord/slate/wiki).
@@ -72,6 +72,22 @@ backend_config:
 ## About shards
 
 Shards is just a folder with files which will be copied into the generated Slate project replacing all files in there. If you follow the Slate project structure you can replace stylesheets, scripts, images, layouts etc to customize the view of the resulting site.
+
+If shards is a string — it is considered a path to single shards directory relative to Foliant project dir:
+```
+slate:
+    shards: 'data/shards'
+```
+
+If shards is a list — each list item is considered as a shards dir. They will be copied into the Slate project subsequently with replace.
+
+```
+slate:
+    shards:
+        - 'common/shards'
+        - 'custom/shards'
+        - 'new_design'
+```
 
 For example, I want to customize standard Slate stylesheets. I look at the Slate repo and see that they lie in the folder `<slate>/source/stylesheets`. I create new stylesheets with the same names as the original ones and put them into my shards dir like that:
 
@@ -83,4 +99,4 @@ shards\
             screen.css.scss
 ```
 
-These stylesheets will replace the original ones in the Slate project just before the website will be baked. So the page will use my styles in the end.
+These stylesheets will replace the original ones in the Slate project just before the website is be baked. So the page will have my styles in the end.
