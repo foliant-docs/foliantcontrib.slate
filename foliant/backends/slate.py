@@ -2,13 +2,13 @@ import os
 import yaml
 import traceback
 
-from shutil import copyfile, copy
+from shutil import copy, move
 from subprocess import run, PIPE, STDOUT, CalledProcessError
 
 from foliant.utils import spinner
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
-from pathlib import Path
+from pathlib import PosixPath
 
 SLATE_REPO = 'https://github.com/lord/slate.git'
 
@@ -39,7 +39,7 @@ class Chapters():
 
     def __init__(self,
                  chapters: list,
-                 working_dir: Path):
+                 working_dir: PosixPath):
         self.set_chapters(chapters)
         self._working_dir = working_dir
 
@@ -87,6 +87,10 @@ class Backend(BaseBackend):
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
         self._chapters = Chapters(self.config['chapters'], self.working_dir)
 
+        self.required_preprocessors_after = {
+            'slate': {}
+        }
+
         if self._slate_tmp_dir.exists():
             remove_tree(self._slate_tmp_dir)
         os.makedirs(self._slate_tmp_dir)
@@ -107,7 +111,7 @@ class Backend(BaseBackend):
                 copy_replace(str(shard_path),
                              str(self._slate_tmp_dir))
 
-    def _add_header(self, chapter_path: Path or str):
+    def _add_header(self, chapter_path: PosixPath or str):
         """
         Add yaml-header into the main md file
 
@@ -157,6 +161,7 @@ class Backend(BaseBackend):
         with spinner(f'Making {target}', self.logger, self.quiet):
             try:
                 chapters = self._chapters.paths_g
+                src_path = self._slate_tmp_dir / 'source/'
 
                 # delete old slate project
                 if self._slate_tmp_dir.exists():
@@ -171,10 +176,10 @@ class Backend(BaseBackend):
                 self._add_shards()
 
                 # remove base source files
-                index_html = self._slate_tmp_dir / 'source/index.html.md'
+                index_html = src_path / 'index.html.md'
                 if index_html.exists():
                     os.remove(index_html)
-                errors_md = self._slate_tmp_dir / 'source/includes/_errors.md'
+                errors_md = src_path / 'includes/_errors.md'
                 if errors_md.exists():
                     os.remove(errors_md)
 
@@ -182,12 +187,17 @@ class Backend(BaseBackend):
                 chapter_path = next(chapters)
                 self._add_header(chapter_path)
                 # without erb extension ruby includes won't work
-                copyfile(chapter_path, str(index_html) + '.erb')
+                move(chapter_path, str(index_html) + '.erb')
+                # copyfile(chapter_path, str(index_html) + '.erb')
 
                 # copy all chapters except the first one into includes folder
                 for chapter_path in chapters:
-                    copy(chapter_path, str(self._slate_tmp_dir /
-                                           'source/includes'))
+                    move(chapter_path, str(src_path / 'includes'))
+
+                # move all directories (supposedly with images) into source
+                for item in self.working_dir.glob('*'):
+                    if item.is_dir():
+                        move(str(item), str(src_path / 'images'))
 
                 if target == 'site':
                     run(
