@@ -1,5 +1,5 @@
 import re
-from shutil import move, copy
+from shutil import copy
 from pathlib import Path, PosixPath
 from os.path import relpath
 from uuid import uuid1
@@ -77,7 +77,8 @@ class Preprocessor(BasePreprocessor):
         for markdown_file_path in self.working_dir.rglob('*.md'):
             with open(markdown_file_path, encoding='utf8') as markdown_file:
                 content = markdown_file.read()
+            processed_content = self._collect_images(content, markdown_file_path)
             with open(markdown_file_path, 'w', encoding='utf8') as markdown_file:
-                markdown_file.write(self._collect_images(content, markdown_file_path))
+                markdown_file.write(processed_content)
 
         self.logger.debug('Preprocessor applied.')

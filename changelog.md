@@ -1,6 +1,7 @@
-# 1.0.4 (under development)
+# 1.0.4
 
 -   Provide compatibility with Foliant 1.0.8.
+-   Fix preprocessor: if error source won't be cleared.
 
 # 1.0.3
 
