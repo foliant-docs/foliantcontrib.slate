@@ -158,7 +158,7 @@ class Backend(BaseBackend):
                 stderr=STDOUT)
 
     def make(self, target: str) -> str:
-        with spinner(f'Making {target}', self.logger, self.quiet):
+        with spinner(f'Making {target}', self.logger, self.quiet, self.debug):
             try:
                 chapters = self._chapters.paths_g
                 src_path = self._slate_tmp_dir / 'source/'
