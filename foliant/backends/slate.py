@@ -30,7 +30,7 @@ def copy_replace(src: str, dst: str):
                 copy(src_file, dst_dir)
 
 
-class Chapters():
+class Chapters:
     """
     Helper class converting chapter list of complicated structure
     into a plain list of chapter names or path to actual md files
@@ -187,12 +187,14 @@ class Backend(BaseBackend):
                 chapter_path = next(chapters)
                 self._add_header(chapter_path)
                 # without erb extension ruby includes won't work
-                move(chapter_path, str(index_html) + '.erb')
+                move(str(chapter_path), str(index_html) + '.erb')
                 # copyfile(chapter_path, str(index_html) + '.erb')
 
                 # copy all chapters except the first one into includes folder
                 for chapter_path in chapters:
-                    move(chapter_path, str(src_path / 'includes'))
+                    dest = src_path / 'includes' / chapter_path.relative_to(self.working_dir).parent / ('_' + chapter_path.name)
+                    dest.parent.mkdir(exist_ok=True)
+                    move(str(chapter_path), str(dest))
 
                 # move all directories (supposedly with images) into source
                 for item in self.working_dir.glob('*'):
@@ -200,14 +202,14 @@ class Backend(BaseBackend):
                         move(str(item), str(src_path / 'images'))
 
                 if target == 'site':
-                    run(
+                    r = run(
                         f'bundle exec middleman build --clean',
                         cwd=self._slate_tmp_dir,
                         shell=True,
-                        check=True,
-                        stdout=PIPE,
-                        stderr=STDOUT
+                        capture_output=True
                     )
+                    if r.stderr:
+                        raise RuntimeError(r.stderr.decode())
                     if os.path.exists(self._slate_site_dir):
                         remove_tree(self._slate_site_dir)
                     copy_tree(str(self._slate_tmp_dir / 'build'),

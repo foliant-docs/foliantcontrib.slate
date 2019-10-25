@@ -1,3 +1,8 @@
+# 1.0.5
+
+-   Better error reporting.
+-   Fixes for working with includes.
+
 # 1.0.4
 
 -   Provide compatibility with Foliant 1.0.8.
