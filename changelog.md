@@ -1,3 +1,7 @@
+# 1.0.6
+
+- Fix bug with error catching introduced in 1.0.5
+
 # 1.0.5
 
 -   Better error reporting.

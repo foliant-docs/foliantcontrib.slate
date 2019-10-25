@@ -5,7 +5,7 @@ import traceback
 from shutil import copy, move
 from subprocess import run, PIPE, STDOUT, CalledProcessError
 
-from foliant.utils import spinner
+from foliant.utils import spinner, output
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
 from pathlib import PosixPath
@@ -202,14 +202,19 @@ class Backend(BaseBackend):
                         move(str(item), str(src_path / 'images'))
 
                 if target == 'site':
-                    r = run(
-                        f'bundle exec middleman build --clean',
-                        cwd=self._slate_tmp_dir,
-                        shell=True,
-                        capture_output=True
-                    )
-                    if r.stderr:
-                        raise RuntimeError(r.stderr.decode())
+                    try:
+                        r = run(
+                            f'bundle exec middleman build --clean',
+                            cwd=self._slate_tmp_dir,
+                            shell=True,
+                            check=True,
+                            stdout=PIPE,
+                            stderr=STDOUT
+                        )
+                    except CalledProcessError as e:
+                        raise RuntimeError(e.output.decode('utf8', errors='ignore'))
+                    command_output_decoded = r.stdout.decode('utf8', errors='ignore')
+                    output(command_output_decoded, self.quiet)
                     if os.path.exists(self._slate_site_dir):
                         remove_tree(self._slate_site_dir)
                     copy_tree(str(self._slate_tmp_dir / 'build'),
