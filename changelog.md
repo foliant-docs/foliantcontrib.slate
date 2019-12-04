@@ -1,3 +1,7 @@
+# 1.0.7
+
+- Fix: images are preserved even from subfolders.
+
 # 1.0.6
 
 - Fix bug with error catching introduced in 1.0.5

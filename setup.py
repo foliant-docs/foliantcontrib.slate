@@ -16,11 +16,11 @@ setup(
     description=SHORT_DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    version='1.0.6',
+    version='1.0.7',
     author='Daniil Minukhin',
     author_email='ddddsa@gmail.com',
     url='https://github.com/foliant-docs/foliantcontrib.slate',
-    packages=['foliant.backends', 'foliant.preprocessors'],
+    packages=['foliant.backends'],
     license='MIT',
     platforms='any',
     install_requires=[
