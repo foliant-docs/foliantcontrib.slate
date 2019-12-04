@@ -11,6 +11,7 @@ from foliant.utils import spinner, output
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
 from pathlib import PosixPath, Path
+from foliant.meta_commands.generate.patterns import YFM_PATTERN
 
 SLATE_REPO = 'https://github.com/lord/slate.git'
 
@@ -133,20 +134,14 @@ class Backend(BaseBackend):
 
     def _add_header(self, chapter_path: PosixPath or str):
         """
-        Add yaml-header into the main md file
+        Add yaml-header from config into the main md file.
 
         chapter_path - path to md file where the header should be inserted
         """
-
         with open(chapter_path, encoding='utf8') as md:
             content = md.read()
         # copy header dict into variable
         header_dict = dict(self._header)
-
-        # prepend includes by all chapters except the first one
-        if len(self._chapters) > 1:
-            header_dict['includes'] = self._chapters.chapters[1:] +\
-                header_dict.get('includes', [])
 
         if header_dict:
             header = yaml.dump(header_dict,
@@ -251,6 +246,8 @@ class Backend(BaseBackend):
 
                 with open(str(index_html) + '.erb', 'w') as f:
                     f.write(processed_source)
+
+                self._add_header(str(index_html) + '.erb')
 
                 if target == 'site':
                     try:
