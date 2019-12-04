@@ -1,14 +1,16 @@
 import os
 import yaml
+import shutil
 import traceback
+import re
 
-from shutil import copy, move
+from shutil import copy
 from subprocess import run, PIPE, STDOUT, CalledProcessError
 
 from foliant.utils import spinner, output
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
-from pathlib import PosixPath
+from pathlib import PosixPath, Path
 
 SLATE_REPO = 'https://github.com/lord/slate.git'
 
@@ -28,6 +30,20 @@ def copy_replace(src: str, dst: str):
                 if os.path.exists(dst_file):
                     os.remove(dst_file)
                 copy(src_file, dst_dir)
+
+
+def unique_name(dest_dir: str or PosixPath, old_name: str) -> str:
+    """
+    Check if file with old_name exists in dest_dir. If it does —
+    add incremental numbers until it doesn't.
+    """
+    counter = 1
+    dest_path = Path(dest_dir)
+    name = old_name
+    while (dest_path / name).exists():
+        counter += 1
+        name = f'_{counter}'.join(os.path.splitext(old_name))
+    return name
 
 
 class Chapters:
@@ -70,7 +86,15 @@ class Chapters:
 
 class Backend(BaseBackend):
 
+    _flat_src_file_name = '__all__.md'
+
     targets = ('slate', 'site')
+
+    required_preprocessors_after = {
+        'flatten': {
+            'flat_src_file_name': _flat_src_file_name
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,10 +110,6 @@ class Backend(BaseBackend):
         self._slate_repo_dir = self.project_path / '.slate/slaterepo'
         self._slate_tmp_dir = self.project_path / '.slate/_tmp'
         self._chapters = Chapters(self.config['chapters'], self.working_dir)
-
-        self.required_preprocessors_after = {
-            'slate': {}
-        }
 
         if self._slate_tmp_dir.exists():
             remove_tree(self._slate_tmp_dir)
@@ -157,16 +177,57 @@ class Backend(BaseBackend):
                 stdout=PIPE,
                 stderr=STDOUT)
 
+    def _process_images(self, source: str, target_dir: str or PosixPath) -> str:
+        """
+        Cleanup target_dir. Copy local images to `target_dir` with unique names
+        and update their definitions with the new filenames.
+
+        `source` — string with HTML source code to search images in;
+        `rel_dir` — path relative to which image paths are determined.
+
+        Returns a tuple: (new_source, attachments)
+
+        new_source — a modified source with correct image paths
+        """
+
+        def _sub(image):
+            image_caption = image.group('caption')
+            image_path = image.group('path')
+
+            # leave external images as is
+            if image_path.startswith('http'):
+                return image.group(0)
+
+            image_path = Path(image_path)
+
+            self.logger.debug(f'Found image: {image.group(0)}')
+
+            new_name = unique_name(target_dir, image_path.name)
+            new_path = Path(target_dir) / new_name
+
+            self.logger.debug(f'Copying image into: {new_path}')
+            shutil.copy(image_path, new_path)
+
+            img_ref = f'![{image_caption}](images/{new_name})'
+
+            self.logger.debug(f'Converted image ref: {img_ref}')
+            return img_ref
+
+        image_pattern = re.compile(r'!\[(?P<caption>.*?)\]\((?P<path>.+?)\)')
+        self.logger.debug('Processing images')
+
+        return image_pattern.sub(_sub, source)
+
     def make(self, target: str) -> str:
         with spinner(f'Making {target}', self.logger, self.quiet, self.debug):
             try:
-                chapters = self._chapters.paths_g
                 src_path = self._slate_tmp_dir / 'source/'
+                img_path = src_path / 'images'
+                source_path = self.working_dir / self._flat_src_file_name
 
                 # delete old slate project
-                if self._slate_tmp_dir.exists():
-                    remove_tree(self._slate_tmp_dir)
-                os.makedirs(self._slate_tmp_dir)
+                shutil.rmtree(self._slate_tmp_dir, ignore_errors=True)
+                self._slate_tmp_dir.mkdir(parents=True)
 
                 # get base slate project
                 self._clone_repo()
@@ -183,23 +244,13 @@ class Backend(BaseBackend):
                 if errors_md.exists():
                     os.remove(errors_md)
 
-                # replace index.html.md with the first chapter
-                chapter_path = next(chapters)
-                self._add_header(chapter_path)
-                # without erb extension ruby includes won't work
-                move(str(chapter_path), str(index_html) + '.erb')
-                # copyfile(chapter_path, str(index_html) + '.erb')
+                # process images and save source in slate folder
+                with open(source_path) as f:
+                    source = f.read()
+                processed_source = self._process_images(source, img_path)
 
-                # copy all chapters except the first one into includes folder
-                for chapter_path in chapters:
-                    dest = src_path / 'includes' / chapter_path.relative_to(self.working_dir).parent / ('_' + chapter_path.name)
-                    dest.parent.mkdir(exist_ok=True)
-                    move(str(chapter_path), str(dest))
-
-                # move all directories (supposedly with images) into source
-                for item in self.working_dir.glob('*'):
-                    if item.is_dir():
-                        move(str(item), str(src_path / 'images'))
+                with open(str(index_html) + '.erb', 'w') as f:
+                    f.write(processed_source)
 
                 if target == 'site':
                     try:
