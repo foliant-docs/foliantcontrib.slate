@@ -1,0 +1,3 @@
+- Fix copying subchapters into includes folder (especially when chapters are in subfolders)
+- Fix adding yaml header (if meta added — don't create a new header)
+- Fix images which are referenced in included chapters
