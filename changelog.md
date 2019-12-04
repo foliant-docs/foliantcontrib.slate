@@ -1,6 +1,7 @@
 # 1.0.7
 
-- Fix: images are preserved even from subfolders.
+- Fix: images are preserved in the output, even from subfolders.
+- YAML Front Matter from the sources is now ignored.
 
 # 1.0.6
 
