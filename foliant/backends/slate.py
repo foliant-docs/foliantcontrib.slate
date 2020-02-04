@@ -11,7 +11,6 @@ from foliant.utils import spinner, output
 from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
 from pathlib import PosixPath, Path
-from foliant.meta_commands.generate.patterns import YFM_PATTERN
 
 SLATE_REPO = 'https://github.com/lord/slate.git'
 

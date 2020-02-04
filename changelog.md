@@ -1,3 +1,7 @@
+# 1.0.8
+
+- Support meta 1.3
+
 # 1.0.7
 
 - Fix: images are preserved in the output, even from subfolders.
