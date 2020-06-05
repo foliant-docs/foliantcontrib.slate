@@ -1,6 +1,8 @@
-[![](https://img.shields.io/pypi/v/foliantcontrib.slate.svg)](https://pypi.org/project/foliantcontrib.slate/)
+[![](https://img.shields.io/pypi/v/foliantcontrib.slate.svg)](https://pypi.org/project/foliantcontrib.slate/)  [![](https://img.shields.io/github/v/tag/foliant-docs/foliantcontrib.slate.svg?label=GitHub)](https://github.com/foliant-docs/foliantcontrib.slate)
 
 # Slate Backend for Foliant
+
+![Static site built by Foliant and Slate backend](img/slate.png)
 
 Slate backend generates API documentation from Markdown using [Slate docs generator](https://github.com/lord/slate).
 
