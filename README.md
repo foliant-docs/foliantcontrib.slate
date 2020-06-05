@@ -17,8 +17,6 @@ This backend operates two targets:
 $ pip install foliantcontrib.slate
 ```
 
-## Usage
-
 To use this backend Slate should be installed in your system. Follow the [instruction](https://github.com/lord/slate#getting-set-up) in Slate repo.
 
 To test if you've installed Slate properly head to the cloned Slate repo in your terminal and try the command below. You should get similar response.
@@ -30,12 +28,16 @@ $ bundle exec middleman
 == Inspect your site configuration at ...
 ```
 
+## Usage
+
 To convert Foliant project to Slate:
 
 ```bash
 $ foliant make slate
-✔ Parsing config
-✔ Making slate
+Parsing config... Done
+Applying preprocessor flatten... Done
+Applying preprocessor _unescape... Done
+Making slate... Done
 ─────────────────────
 Result: My_Project-2018-09-19.src/
 ```
@@ -43,9 +45,10 @@ Result: My_Project-2018-09-19.src/
 Build a standalone website:
 
 ```bash
-$ foliant make site
-✔ Parsing config
-✔ Making site
+$ foliant make site -w slate
+Parsing config... Done
+Applying preprocessor flatten... Done
+Applying preprocessor _unescape... Done
 ─────────────────────
 Result: My_Project-2018-09-19.slate/
 ```
