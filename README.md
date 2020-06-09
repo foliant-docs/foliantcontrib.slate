@@ -2,7 +2,7 @@
 
 # Slate Backend for Foliant
 
-![Static site built by Foliant and Slate backend](img/slate.png)
+![Static site built by Foliant and Slate backend](https://raw.githubusercontent.com/foliant-docs/foliantcontrib.slate/master/img/slate.png)
 
 Slate backend generates API documentation from Markdown using [Slate docs generator](https://github.com/lord/slate).
 
