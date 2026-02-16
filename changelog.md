@@ -1,3 +1,7 @@
+# 1.0.10
+
+- Add: publishing workflow
+
 # 1.0.9
 
 - Fix: error due to missing slatedocs repository
