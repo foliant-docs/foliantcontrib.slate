@@ -12,7 +12,7 @@ from foliant.backends.base import BaseBackend
 from distutils.dir_util import copy_tree, remove_tree
 from pathlib import PosixPath, Path
 
-SLATE_REPO = 'https://github.com/lord/slate.git'
+SLATE_REPO = 'https://github.com/TOsmanov/slate.git'
 
 
 def copy_replace(src: str, dst: str):
