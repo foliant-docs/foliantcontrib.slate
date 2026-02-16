@@ -1,3 +1,7 @@
+# 1.0.9
+
+- Fix: error due to missing slatedocs repository
+
 # 1.0.8
 
 - Support meta 1.3
