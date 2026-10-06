@@ -1,3 +1,7 @@
+# 1.0.11
+
+- Update: getting the URL of the slate repository from the configuration or environment variable
+
 # 1.0.10
 
 - Add: publishing workflow

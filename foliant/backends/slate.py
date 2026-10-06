@@ -6,6 +6,7 @@ import re
 
 from shutil import copy
 from subprocess import run, PIPE, STDOUT, CalledProcessError
+from typing import Union
 
 from foliant.utils import spinner, output
 from foliant.backends.base import BaseBackend
@@ -16,20 +17,20 @@ SLATE_REPO = 'https://github.com/TOsmanov/slate.git'
 
 
 def copy_replace(src: str, dst: str):
-        """
-        Helper function to copy contents of src dir into dst dir replacing
-        all files with same names
-        """
-        for src_dir, dirs, files in os.walk(src):
-            dst_dir = src_dir.replace(src, dst, 1)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir)
-            for file_ in files:
-                src_file = os.path.join(src_dir, file_)
-                dst_file = os.path.join(dst_dir, file_)
-                if os.path.exists(dst_file):
-                    os.remove(dst_file)
-                copy(src_file, dst_dir)
+    """
+    Helper function to copy contents of src dir into dst dir replacing
+    all files with same names
+    """
+    for src_dir, dirs, files in os.walk(src):
+        dst_dir = src_dir.replace(src, dst, 1)
+        if not os.path.exists(dst_dir):
+            os.makedirs(dst_dir)
+        for file_ in files:
+            src_file = os.path.join(src_dir, file_)
+            dst_file = os.path.join(dst_dir, file_)
+            if os.path.exists(dst_file):
+                os.remove(dst_file)
+            copy(src_file, dst_dir)
 
 
 def unique_name(dest_dir: str or PosixPath, old_name: str) -> str:
@@ -66,7 +67,7 @@ class Chapters:
         def flatten_seq(seq):
             """convert a sequence of embedded sequences into a plain list"""
             result = []
-            vals = seq.values() if type(seq) == dict else seq
+            vals = seq.values() if isinstance(seq, dict) else seq
             for i in vals:
                 if type(i) in (dict, list):
                     result.extend(flatten_seq(i))
@@ -103,6 +104,14 @@ class Backend(BaseBackend):
                                              {}).get('slate', {})
         self._header = self._slate_config.get('header', {})
 
+        self._slate_repo = self._slate_config.get('slate_repo')
+
+        if not self._slate_repo:
+            self._slate_repo = os.getenv('SLATE_REPO')
+
+        if not self._slate_repo:
+            self._slate_repo = SLATE_REPO
+
         self._slate_site_dir = \
             f'{self._slate_config.get("slug", self.get_slug())}.slate'
         self._slate_project_dir = \
@@ -123,7 +132,7 @@ class Backend(BaseBackend):
         """move shards into slate tmp dir"""
 
         shards = self._slate_config.get('shards', 'shards')
-        if type(shards) == str:
+        if isinstance(shards, str):
             shards = [shards]
         for shard in shards:
             shard_path = self.project_path / shard
@@ -131,7 +140,7 @@ class Backend(BaseBackend):
                 copy_replace(str(shard_path),
                              str(self._slate_tmp_dir))
 
-    def _add_header(self, chapter_path: PosixPath or str):
+    def _add_header(self, chapter_path: Union[PosixPath, str]):
         """
         Add yaml-header from config into the main md file.
 
@@ -153,9 +162,9 @@ class Backend(BaseBackend):
         """Clone or update slate repository"""
 
         try:
-            self.logger.debug(f'Cloning repository {SLATE_REPO}...')
+            self.logger.debug(f'Cloning repository {self._slate_repo}...')
             run(
-                f'git clone {SLATE_REPO} {self._slate_repo_dir}',
+                f'git clone {self._slate_repo} {self._slate_repo_dir}',
                 shell=True,
                 check=True,
                 stdout=PIPE,
@@ -163,7 +172,7 @@ class Backend(BaseBackend):
             )
 
         except CalledProcessError:
-            self.logger.debug(f'Updating repository {SLATE_REPO}...')
+            self.logger.debug(f'Updating repository {self._slate_repo}...')
             run('git pull',
                 cwd=self._slate_repo_dir,
                 shell=True,
@@ -251,7 +260,7 @@ class Backend(BaseBackend):
                 if target == 'site':
                     try:
                         r = run(
-                            f'bundle exec middleman build --clean',
+                            'bundle exec middleman build --clean',
                             cwd=self._slate_tmp_dir,
                             shell=True,
                             check=True,
